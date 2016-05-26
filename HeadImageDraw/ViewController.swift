@@ -15,19 +15,14 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
         super.viewDidLoad()
         
         let button = UIButton()
-        button.frame = CGRectMake(50, 50, 100, 50)
-        button.setTitle("选择头像", forState: .Normal)
+        button.tag = 100
+        button.layer.cornerRadius = 50
+        button.layer.masksToBounds = true
+        button.frame = CGRectMake(100, 50, 100, 100)
         button.backgroundColor = UIColor.purpleColor()
         button.addTarget(self, action: #selector(self.click(_:)), forControlEvents: .TouchUpInside)
         self.view.addSubview(button)
         
-        let imageView = UIImageView()
-        imageView.tag = 101
-        imageView.frame  = CGRectMake(50, 100, 100, 100)
-        imageView.layer.cornerRadius = 50
-        imageView.layer.masksToBounds = true
-        imageView.backgroundColor = UIColor.blackColor()
-        self.view.addSubview(imageView)
         // Do any additional setup after loading the view, typically from a nib.
     }
     
@@ -78,8 +73,8 @@ class ViewController: UIViewController, UIImagePickerControllerDelegate, UINavig
             let vc = LCImageDrawViewController()
             vc.origialImage = image
             vc.imageFinishedBlock = { (image: UIImage) in
-                let imageView = self.view.viewWithTag(101) as! UIImageView
-                imageView.image = image
+                let button = self.view.viewWithTag(100) as! UIButton
+                button.setBackgroundImage(image, forState: .Normal)
             }
             self.presentViewController(vc, animated: true, completion: nil)
         }
