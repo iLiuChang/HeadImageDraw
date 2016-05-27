@@ -55,7 +55,7 @@ extension UIImage {
 }
 class LCImageDrawViewController: UIViewController {
     // 放大倍数
-    let maxScale: CGFloat = 2
+    let maxScale: CGFloat = 1.5
     // 半径
     let radius: CGFloat = 150
     // 原图
@@ -89,9 +89,9 @@ class LCImageDrawViewController: UIViewController {
         }
         // width
         if fitW <= fitH && fitW < radius * 2 {
-            let scale = fitW / radius * 2
+            let scale = fitW / (radius * 2)
             fitW = radius * 2
-            fitH = fitH * scale
+            fitH = fitH / scale
         }
         
         let imageView = UIImageView()
@@ -123,17 +123,23 @@ class LCImageDrawViewController: UIViewController {
     }
     
     func initButton() {
+        let bottomView = UIView()
+        bottomView.frame = CGRectMake(0, self.view.frame.height - 50, self.view.frame.width, 50)
+        bottomView.backgroundColor = UIColor.blackColor()
+        bottomView.alpha = 0.7
+        self.view.addSubview(bottomView)
+        
         let button = UIButton()
-        button.frame = CGRectMake(0, self.view.frame.height - 50, 100, 50)
+        button.frame = CGRectMake(0, 0, 100, 50)
         button.setTitle("确定", forState: .Normal)
         button.addTarget(self, action: #selector(self.sure), forControlEvents: .TouchUpInside)
-        self.view.addSubview(button)
+        bottomView.addSubview(button)
         
         let cancelBtn = UIButton()
-        cancelBtn.frame = CGRectMake(self.view.frame.width - 100, self.view.frame.height - 50, 100, 50)
+        cancelBtn.frame = CGRectMake(self.view.frame.width - 100, 0, 100, 50)
         cancelBtn.setTitle("取消", forState: .Normal)
         cancelBtn.addTarget(self, action: #selector(self.cancel), forControlEvents: .TouchUpInside)
-        self.view.addSubview(cancelBtn)
+        bottomView.addSubview(cancelBtn)
     }
     func initGestureRecognizer() {
         let pinch = UIPinchGestureRecognizer.init(target: self, action: #selector(self.pinch(_:)))
@@ -183,6 +189,16 @@ class LCImageDrawViewController: UIViewController {
             pinch.scale = 1
             if self.origialImageView.frame.width > radius * 2 && self.origialImageView.frame.height > radius * 2 {
                 self.origialImageView.frame = self.handleBorderOverflow(self.origialImageView.frame)
+            }else {
+                // 垂直
+                var newFrame = self.origialImageView.frame
+                if self.origialImageView.frame.origin.y > self.cropView.frame.origin.y {
+                    newFrame.origin.y = self.cropView.frame.origin.y
+                }
+                if self.origialImageView.frame.maxY < self.cropView.frame.maxY {
+                    newFrame.origin.y = self.cropView.frame.maxY - newFrame.size.height
+                }
+                self.origialImageView.frame = newFrame
             }
         }else if pinch.state == .Ended {
             var newFrame = handleScaleOverflow(self.origialImageView.frame)
@@ -219,8 +235,8 @@ class LCImageDrawViewController: UIViewController {
         if (newFrame.size.width > maxFrame.size.width) {
             newFrame = maxFrame
         }
-        newFrame.origin.x = oriCenter.x - newFrame.size.width/2
-        newFrame.origin.y = oriCenter.y - newFrame.size.height/2
+        newFrame.origin.x = oriCenter.x - (newFrame.size.width / 2)
+        newFrame.origin.y = oriCenter.y - (newFrame.size.height / 2)
         return newFrame
     }
     
