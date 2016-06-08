@@ -15,6 +15,7 @@
 		582544B91CF6E60600921AA0 /* HeadImageDrawTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582544B81CF6E60600921AA0 /* HeadImageDrawTests.swift */; };
 		582544C41CF6E60600921AA0 /* HeadImageDrawUITests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582544C31CF6E60600921AA0 /* HeadImageDrawUITests.swift */; };
 		582544D21CF6E63400921AA0 /* LCImageDrawViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 582544D11CF6E63400921AA0 /* LCImageDrawViewController.swift */; };
+		58744DEA1D081D14007333BB /* headImage.gif in Resources */ = {isa = PBXBuildFile; fileRef = 58744DE91D081D14007333BB /* headImage.gif */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +52,7 @@
 		582544D11CF6E63400921AA0 /* LCImageDrawViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = LCImageDrawViewController.swift; sourceTree = "<group>"; };
 		582544D31CF6E9A500921AA0 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Main.strings"; sourceTree = "<group>"; };
 		582544D41CF6E9A500921AA0 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/LaunchScreen.strings"; sourceTree = "<group>"; };
+		58744DE91D081D14007333BB /* headImage.gif */ = {isa = PBXFileReference; lastKnownFileType = image.gif; path = headImage.gif; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -101,6 +103,7 @@
 		582544A21CF6E60500921AA0 /* HeadImageDraw */ = {
 			isa = PBXGroup;
 			children = (
+				58744DE91D081D14007333BB /* headImage.gif */,
 				582544A31CF6E60500921AA0 /* AppDelegate.swift */,
 				582544A51CF6E60500921AA0 /* ViewController.swift */,
 				582544D11CF6E63400921AA0 /* LCImageDrawViewController.swift */,
@@ -236,6 +239,7 @@
 			files = (
 				582544AE1CF6E60500921AA0 /* LaunchScreen.storyboard in Resources */,
 				582544AB1CF6E60500921AA0 /* Assets.xcassets in Resources */,
+				58744DEA1D081D14007333BB /* headImage.gif in Resources */,
 				582544A91CF6E60500921AA0 /* Main.storyboard in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -498,6 +502,7 @@
 				582544CA1CF6E60600921AA0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		582544CB1CF6E60600921AA0 /* Build configuration list for PBXNativeTarget "HeadImageDrawTests" */ = {
 			isa = XCConfigurationList;
@@ -506,6 +511,7 @@
 				582544CD1CF6E60600921AA0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		582544CE1CF6E60600921AA0 /* Build configuration list for PBXNativeTarget "HeadImageDrawUITests" */ = {
 			isa = XCConfigurationList;
@@ -514,6 +520,7 @@
 				582544D01CF6E60600921AA0 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

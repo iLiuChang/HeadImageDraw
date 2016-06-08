@@ -56,7 +56,7 @@ extension UIImage {
 class LCImageDrawViewController: UIViewController {
     // 放大倍数
     let maxScale: CGFloat = 1.5
-    // 半径
+    // 半径(不能大于屏幕宽度的一半)
     let radius: CGFloat = 150
     // 原图
     var origialImage: UIImage?
@@ -65,8 +65,8 @@ class LCImageDrawViewController: UIViewController {
     
     private weak var origialImageView: UIImageView!
     private var originalFrame: CGRect!
-    private weak var cropView: UIView!
-    
+//    private weak var cropView: UIView!
+    private var cropFrame: CGRect!
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.blackColor()
@@ -108,18 +108,40 @@ class LCImageDrawViewController: UIViewController {
     }
     
     func initCropView() {
+        let W = self.view.frame.width
+        let H = self.view.frame.height
+
+        let center = self.view.center
+        self.cropFrame = CGRectMake(center.x - radius , center.y - radius, radius * 2, radius * 2)
+        
         let view = UIView()
-        view.frame = CGRectMake((self.view.frame.width - (radius * 2)) / 2, (self.view.frame.height - (radius * 2)) / 2 , radius * 2, radius * 2)
-        view.backgroundColor = UIColor.clearColor()
+        view.frame = self.view.frame
+        view.backgroundColor = UIColor.blackColor()
+        view.alpha = 0.5
         self.view.addSubview(view)
-        self.cropView = view
         let shaperLayer = CAShapeLayer()
-        shaperLayer.strokeColor = UIColor.yellowColor().CGColor
-        shaperLayer.fillColor = UIColor.clearColor().CGColor
-        let path = UIBezierPath.init(arcCenter: self.view.center, radius: radius, startAngle: 0, endAngle: CGFloat(M_PI) * 2, clockwise: true)
-        path.lineWidth = 2
-        shaperLayer.path = path.CGPath
-        self.view.layer.addSublayer(shaperLayer)
+        let path = CGPathCreateMutable()
+     
+        // top
+        CGPathAddRect(path, nil, CGRectMake(0, 0, W, cropFrame.origin.y))
+        // down
+        CGPathAddRect(path, nil, CGRectMake(0, cropFrame.maxY, W, H - cropFrame.maxY))
+        // left
+        CGPathAddRect(path, nil, CGRectMake(0, cropFrame.origin.y, cropFrame.origin.x, radius * 2))
+        // right
+        CGPathAddRect(path, nil, CGRectMake(cropFrame.maxX, cropFrame.origin.y, W - cropFrame.maxX, radius * 2))
+ 
+        shaperLayer.path = path
+        shaperLayer.lineWidth = 2
+        shaperLayer.strokeColor = UIColor.whiteColor().CGColor
+        view.layer.mask = shaperLayer
+        
+        let edgePath = UIBezierPath.init(rect: cropFrame)
+        let edgeLayer = CAShapeLayer()
+        edgeLayer.path = edgePath.CGPath
+        edgeLayer.lineWidth = 1
+        edgeLayer.strokeColor = UIColor.whiteColor().CGColor
+        view.layer.addSublayer(edgeLayer)
     }
     
     func initButton() {
@@ -157,23 +179,22 @@ class LCImageDrawViewController: UIViewController {
     }
     
     func getSubImage() -> UIImage {
-        let squareFrame = self.cropView.frame
         let scaleRatio = self.origialImageView.frame.size.width / self.origialImage!.size.width
-        var x = (squareFrame.origin.x - self.origialImageView.frame.origin.x) / scaleRatio
-        var y = (squareFrame.origin.y - self.origialImageView.frame.origin.y) / scaleRatio
-        var w = squareFrame.size.width / scaleRatio
-        var h = squareFrame.size.width / scaleRatio
-        if (self.origialImageView.frame.size.width < squareFrame.size.width) {
+        var x = (cropFrame.origin.x - self.origialImageView.frame.origin.x) / scaleRatio
+        var y = (cropFrame.origin.y - self.origialImageView.frame.origin.y) / scaleRatio
+        var w = cropFrame.size.width / scaleRatio
+        var h = cropFrame.size.width / scaleRatio
+        if (self.origialImageView.frame.size.width < cropFrame.size.width) {
             let newW = self.origialImage!.size.width
-            let newH = newW * (squareFrame.size.height / squareFrame.size.width)
+            let newH = newW * (cropFrame.size.height / cropFrame.size.width)
             x = 0
             y = y + (h - newH) / 2
             w = newH
             h = newH
         }
-        if (self.origialImageView.frame.size.height < squareFrame.size.height) {
+        if (self.origialImageView.frame.size.height < cropFrame.size.height) {
             let newH = self.origialImage!.size.height
-            let newW = newH * (squareFrame.size.width / squareFrame.size.height)
+            let newW = newH * (cropFrame.size.width / cropFrame.size.height)
             x = x + (w - newW) / 2
             y = 0
             w = newH
@@ -192,11 +213,11 @@ class LCImageDrawViewController: UIViewController {
             }else {
                 // 垂直
                 var newFrame = self.origialImageView.frame
-                if self.origialImageView.frame.origin.y > self.cropView.frame.origin.y {
-                    newFrame.origin.y = self.cropView.frame.origin.y
+                if self.origialImageView.frame.origin.y > self.cropFrame.origin.y {
+                    newFrame.origin.y = self.cropFrame.origin.y
                 }
-                if self.origialImageView.frame.maxY < self.cropView.frame.maxY {
-                    newFrame.origin.y = self.cropView.frame.maxY - newFrame.size.height
+                if self.origialImageView.frame.maxY < self.cropFrame.maxY {
+                    newFrame.origin.y = self.cropFrame.maxY - newFrame.size.height
                 }
                 self.origialImageView.frame = newFrame
             }
@@ -241,7 +262,6 @@ class LCImageDrawViewController: UIViewController {
     }
     
     func handleBorderOverflow(lastFrame: CGRect) -> CGRect {
-        let cropFrame = self.cropView.frame
         var newFrame = lastFrame
         // 水平
         if lastFrame.origin.x > cropFrame.origin.x {
@@ -257,8 +277,8 @@ class LCImageDrawViewController: UIViewController {
         if lastFrame.maxY < cropFrame.maxY {
             newFrame.origin.y = cropFrame.maxY - newFrame.size.height
         }
-        if self.origialImageView.frame.size.width > self.origialImageView.frame.size.height && newFrame.size.height <= self.cropView.frame.size.height {
-            newFrame.origin.y = self.cropView.frame.origin.y + (self.cropView.frame.size.height - newFrame.size.height) / 2
+        if self.origialImageView.frame.size.width > self.origialImageView.frame.size.height && newFrame.size.height <= cropFrame.size.height {
+            newFrame.origin.y = cropFrame.origin.y + (cropFrame.size.height - newFrame.size.height) / 2
         }
         return newFrame
     }
