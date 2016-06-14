@@ -10,6 +10,7 @@ import UIKit
 
 extension UIImage {
     
+    // fix orientation for image
     class func fixOrientation(aImage: UIImage) -> UIImage {
         if (aImage.imageOrientation == .Up){
             return aImage
@@ -51,11 +52,23 @@ extension UIImage {
         return UIImage(CGImage: cgimg!)
     }
     
+    // crop image
+    func imageWithCropRect(imageRect: CGRect) -> UIImage {
+        let fixImage = UIImage.fixOrientation(self)
+        let subImageRef = CGImageCreateWithImageInRect(fixImage.CGImage, imageRect)
+        UIGraphicsBeginImageContext(imageRect.size)
+        let context = UIGraphicsGetCurrentContext()
+        CGContextDrawImage(context, imageRect, subImageRef)
+        let cropImage = UIImage(CGImage: subImageRef!)
+        UIGraphicsEndImageContext()
+        return cropImage
+    }
+    
     
 }
 class LCImageDrawViewController: UIViewController {
     // 放大倍数
-    let maxScale: CGFloat = 1.5
+    let maxScale: CGFloat = 2.0
     // 半径(不能大于屏幕宽度的一半)
     let radius: CGFloat = 150
     // 原图
@@ -65,8 +78,9 @@ class LCImageDrawViewController: UIViewController {
     
     private weak var origialImageView: UIImageView!
     private var originalFrame: CGRect!
-//    private weak var cropView: UIView!
     private var cropFrame: CGRect!
+    
+    // MARK: - life cycle
     override func viewDidLoad() {
         super.viewDidLoad()
         self.view.backgroundColor = UIColor.blackColor()
@@ -76,6 +90,7 @@ class LCImageDrawViewController: UIViewController {
         initGestureRecognizer()
     }
     
+    // MARK: - private methods
     func initOriginalImageView() {
         let W = origialImage!.size.width / 2
         let H = origialImage!.size.height / 2
@@ -170,14 +185,6 @@ class LCImageDrawViewController: UIViewController {
         self.view.addGestureRecognizer(pan)
     }
     
-    func cancel() {
-        self.dismissViewControllerAnimated(true, completion: nil)
-    }
-    func sure() {
-        imageFinishedBlock!(image: getSubImage())
-        self.dismissViewControllerAnimated(true, completion: nil)
-    }
-    
     func getSubImage() -> UIImage {
         let scaleRatio = self.origialImageView.frame.size.width / self.origialImage!.size.width
         var x = (cropFrame.origin.x - self.origialImageView.frame.origin.x) / scaleRatio
@@ -201,45 +208,7 @@ class LCImageDrawViewController: UIViewController {
             h = newH
         }
         let myImageRect = CGRectMake(x, y, w, h)
-        return self.getCropImage(self.origialImage!, imageRect: myImageRect)
-        
-    }
-    func pinch(pinch: UIPinchGestureRecognizer) {
-        if pinch.state == .Began || pinch.state == .Changed {
-            origialImageView.transform = CGAffineTransformScale(origialImageView.transform, pinch.scale, pinch.scale)
-            pinch.scale = 1
-            if self.origialImageView.frame.width > radius * 2 && self.origialImageView.frame.height > radius * 2 {
-                self.origialImageView.frame = self.handleBorderOverflow(self.origialImageView.frame)
-            }else {
-                // 垂直
-                var newFrame = self.origialImageView.frame
-                if self.origialImageView.frame.origin.y > self.cropFrame.origin.y {
-                    newFrame.origin.y = self.cropFrame.origin.y
-                }
-                if self.origialImageView.frame.maxY < self.cropFrame.maxY {
-                    newFrame.origin.y = self.cropFrame.maxY - newFrame.size.height
-                }
-                self.origialImageView.frame = newFrame
-            }
-        }else if pinch.state == .Ended {
-            var newFrame = handleScaleOverflow(self.origialImageView.frame)
-            newFrame = handleBorderOverflow(newFrame)
-            UIView.animateWithDuration(0.25, animations: {
-                self.origialImageView.frame = newFrame
-            })
-        }
-    }
-    
-    func pan(pan: UIPanGestureRecognizer) {
-        if pan.state == .Began || pan.state == .Changed {
-            let translation = pan.translationInView(origialImageView.superview)
-            origialImageView.center = CGPointMake(origialImageView.center.x + translation.x, origialImageView.center.y + translation.y)
-            pan.setTranslation(CGPointZero, inView: origialImageView.superview)
-        }else if pan.state == .Ended {
-            UIView.animateWithDuration(0.25, animations: {
-                self.origialImageView.frame = self.handleBorderOverflow(self.origialImageView.frame)
-            })
-        }
+        return self.origialImage!.imageWithCropRect(myImageRect)
         
     }
     
@@ -283,24 +252,45 @@ class LCImageDrawViewController: UIViewController {
         return newFrame
     }
     
-    // 获取裁剪的图片
-    func getCropImage(originalImage: UIImage, imageRect: CGRect) -> UIImage {
-        let fixImage = UIImage.fixOrientation(originalImage)
-        let subImageRef = CGImageCreateWithImageInRect(fixImage.CGImage, imageRect)
-        UIGraphicsBeginImageContext(imageRect.size)
-        let context = UIGraphicsGetCurrentContext()
-        CGContextDrawImage(context, imageRect, subImageRef)
-        let cropImage = UIImage(CGImage: subImageRef!)
-        UIGraphicsEndImageContext()
-        return cropImage
+    // MARK: - response events
+    func cancel() {
+        self.dismissViewControllerAnimated(true, completion: nil)
     }
     
-    
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
+    func sure() {
+        imageFinishedBlock!(image: getSubImage())
+        self.dismissViewControllerAnimated(true, completion: nil)
     }
     
+
+    func pinch(pinch: UIPinchGestureRecognizer) {
+        if pinch.state == .Began || pinch.state == .Changed {
+            origialImageView.transform = CGAffineTransformScale(origialImageView.transform, pinch.scale, pinch.scale)
+            pinch.scale = 1
+            if self.origialImageView.frame.width > radius * 2 && self.origialImageView.frame.height > radius * 2 {
+                self.origialImageView.frame = self.handleBorderOverflow(self.origialImageView.frame)
+            }
+        }else if pinch.state == .Ended {
+            var newFrame = handleScaleOverflow(self.origialImageView.frame)
+            newFrame = handleBorderOverflow(newFrame)
+            UIView.animateWithDuration(0.25, animations: {
+                self.origialImageView.frame = newFrame
+            })
+        }
+    }
+    
+    func pan(pan: UIPanGestureRecognizer) {
+        if pan.state == .Began || pan.state == .Changed {
+            let translation = pan.translationInView(origialImageView.superview)
+            origialImageView.center = CGPointMake(origialImageView.center.x + translation.x, origialImageView.center.y + translation.y)
+            pan.setTranslation(CGPointZero, inView: origialImageView.superview)
+        }else if pan.state == .Ended {
+            UIView.animateWithDuration(0.25, animations: {
+                self.origialImageView.frame = self.handleBorderOverflow(self.origialImageView.frame)
+            })
+        }
+        
+    }
     
     
 }
